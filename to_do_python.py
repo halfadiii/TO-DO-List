@@ -1,53 +1,55 @@
-import sys
+import tkinter as tk
+from tkinter import messagebox
 
-def add_task(task, file_path):
-    with open(file_path, 'a') as file:
-        file.write(task + '\n')
-    print("Task added.")
-
-def list_tasks(file_path):
-    try:
-        with open(file_path, 'r') as file:
-            tasks = file.readlines()
-            if tasks:
-                print("ToDo List:")
-                for index, task in enumerate(tasks, 1):
-                    print(f"{index}. {task.strip()}")
-            else:
-                print("No tasks to show.")
-    except FileNotFoundError:
-        print("No tasks to show.")
-
-def delete_task(task_index, file_path):
-    try:
-        with open(file_path, 'r') as file:
-            tasks = file.readlines()
-        if tasks and 0 < task_index <= len(tasks):
-            del tasks[task_index - 1]
-            with open(file_path, 'w') as file:
-                file.writelines(tasks)
-            print("Task deleted.")
-        else:
-            print("Invalid task index.")
-    except FileNotFoundError:
-        print("No tasks to show.")
-
-if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        print("Usage: python todo.py [add/list/delete] [task]")
+def add_task():
+    task = task_entry.get()
+    if task:
+        with open(file_path, 'a') as file:
+            file.write(task + '\n')
+        task_entry.delete(0, tk.END)
+        list_tasks()
     else:
-        action = sys.argv[1]
-        file_path = "todo.txt"
-        
-        if action == "add" and len(sys.argv) == 3:
-            add_task(sys.argv[2], file_path)
-        elif action == "list":
-            list_tasks(file_path)
-        elif action == "delete" and len(sys.argv) == 3:
-            try:
-                task_index = int(sys.argv[2])
-                delete_task(task_index, file_path)
-            except ValueError:
-                print("Please enter a valid task index.")
-        else:
-            print("Invalid command or number of arguments.")
+        messagebox.showwarning("Warning", "The task cannot be empty.")
+
+def list_tasks():
+    listbox.delete(0, tk.END)
+    try:
+        with open(file_path, 'r') as file:
+            for task in file:
+                listbox.insert(tk.END, task.strip())
+    except FileNotFoundError:
+        pass
+
+def delete_task():
+    try:
+        task_index = listbox.curselection()[0]
+        with open(file_path, 'r') as file:
+            tasks = file.readlines()
+        del tasks[task_index]
+        with open(file_path, 'w') as file:
+            file.writelines(tasks)
+        list_tasks()
+    except IndexError:
+        messagebox.showerror("Error", "Please select a task to delete.")
+
+root = tk.Tk()
+root.title("ToDo List")
+
+task_entry = tk.Entry(root, width=50)
+task_entry.pack(pady=20)
+
+add_button = tk.Button(root, text="Add Task", command=add_task)
+add_button.pack(pady=10)
+
+listbox = tk.Listbox(root, width=50, height=10)
+listbox.pack(pady=20)
+
+delete_button = tk.Button(root, text="Delete Selected Task", command=delete_task)
+delete_button.pack(pady=10)
+
+#task listing
+file_path = "todo.txt"
+list_tasks()
+
+#GUI
+root.mainloop()
